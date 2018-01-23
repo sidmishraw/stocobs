@@ -1,0 +1,7 @@
+{
+  "cSpell.words": ["alexa", "linebreak", "reprompt", "stoc", "stockobs", "stocobs"],
+  "cSpell.enabled": false,
+  "prettier.disableLanguages": ["python"],
+  "prettier.eslintIntegration": false,
+  "prettier.printWidth": 120
+}

@@ -1,0 +1,19 @@
+{
+  "name": "stocobs",
+  "version": "1.0.0",
+  "description": "STOCOBS Alexa custom skill backend.",
+  "main": "index.js",
+  "dependencies": {
+    "@types/node": "^9.3.0",
+    "tslint-config-prettier": "^1.6.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "stocobs"
+  ],
+  "author": "Sidharth Mishra",
+  "license": "Apache-2.0"
+}

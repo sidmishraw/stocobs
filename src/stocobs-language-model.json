@@ -1,0 +1,108 @@
+{
+  "languageModel": {
+    "types": [
+      {
+        "name": "COMPANY_NAME",
+        "values": [
+          {
+            "id": null,
+            "name": {
+              "value": "Microsoft",
+              "synonyms": ["microsoft"]
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "Amazon",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "Google",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "Walmart",
+              "synonyms": ["Wall mart", "walmart"]
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "Zycus",
+              "synonyms": ["Zai Cus"]
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "Pfizer",
+              "synonyms": ["fizer", "pff fizer"]
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "Uber",
+              "synonyms": []
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "Lyft",
+              "synonyms": ["lift"]
+            }
+          },
+          {
+            "id": null,
+            "name": {
+              "value": "Netflix",
+              "synonyms": ["net flix"]
+            }
+          }
+        ]
+      }
+    ],
+    "intents": [
+      {
+        "name": "AMAZON.CancelIntent",
+        "samples": []
+      },
+      {
+        "name": "AMAZON.HelpIntent",
+        "samples": []
+      },
+      {
+        "name": "AMAZON.StopIntent",
+        "samples": []
+      },
+      {
+        "name": "StockObserver",
+        "samples": [
+          "Alexa ask stock aubs how is {companyName} doing today",
+          "Alexa ask stock aubs how is {companyName} doing",
+          "Alexa ask stock aubs how was {companyName} doing today",
+          "Alexa ask stock aubs how was {companyName} today",
+          "Alexa ask stock aubs how {companyName} did today",
+          "Alexa ask stock aubs how {companyName} was doing today",
+          "Alexa ask stock aubs how {companyName} has done today",
+          "Alexa how did {companyName} do today"
+        ],
+        "slots": [
+          {
+            "name": "companyName",
+            "type": "COMPANY_NAME"
+          }
+        ]
+      }
+    ],
+    "invocationName": "stock aubs"
+  }
+}

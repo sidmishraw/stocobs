@@ -1,0 +1,12 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "target": "ES5",
+    "module": "commonjs",
+    "types": ["node"],
+    "jsx": "preserve",
+    "removeComments": false
+  },
+  "exclude": ["node_modules", "**/node_modules/*"],
+  "include": ["src/**/*"]
+}
