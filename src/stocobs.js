@@ -5,7 +5,7 @@
  * @description Handler for STOCOBS © Alexa skill.
  * @created Mon Jan 22 2018 14:11:26 GMT-0800 (PST)
  * @copyright 2017 Sidharth Mishra
- * @last-modified Tue Jan 23 2018 11:13:47 GMT-0800 (PST)
+ * @last-modified Tue Jan 23 2018 19:07:16 GMT-0800 (PST)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 // =========================================================================================
@@ -132,7 +132,7 @@ var Response = /** @class */ (function() {
    *
    * If not provided, defaults to `true`.
    *
-   * @param {any[]} [directives]
+   * @param {Array<any>} [directives]
    * An array of directives specifying device-level actions to take using a particular interface, such as the AudioPlayer interface for streaming audio.
    * For details about the directives you can include in your response, see:
    * * [AudioPlayer Interface Reference](https://developer.amazon.com/docs/custom-skills/audioplayer-interface-reference.html)

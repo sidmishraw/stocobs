@@ -4,7 +4,7 @@
  * @description Handler for STOCOBS © Alexa skill.
  * @created Mon Jan 22 2018 14:11:26 GMT-0800 (PST)
  * @copyright 2017 Sidharth Mishra
- * @last-modified Tue Jan 23 2018 11:13:30 GMT-0800 (PST)
+ * @last-modified Tue Jan 23 2018 19:07:07 GMT-0800 (PST)
  */
 
 // =========================================================================================
@@ -239,10 +239,10 @@ interface ISlot {
 interface IResolutions {
   /**
    * An array of objects representing each possible authority for entity resolution. An authority represents the source for the data provided for the slot. For a custom slot type, the authority is the slot type you defined.
-   * @type {object[]}
+   * @type {Array<object>}
    * @memberof IResolutions
    */
-  resolutionsPerAuthority: object[];
+  resolutionsPerAuthority: Array<object>;
 }
 // =========================================================================================
 //                                      RESPONSE
@@ -262,9 +262,9 @@ interface IStocObsSessionAttributes {
  * The `outputSpeech` object.
  */
 class OutputSpeech {
-  public  type: string;
-  public  text?: string;
-  public  ssml?: string;
+  public type: string;
+  public text?: string;
+  public ssml?: string;
 
   /**
    * Creates an instance of OutputSpeech.
@@ -300,11 +300,11 @@ class OutputSpeech {
  * This object can only be included when sending a response to a LaunchRequest or IntentRequest.
  */
 class Card {
-  public  type: string;
-  public  title?: string;
-  public  content?: string;
-  public  text?: string;
-  public  image?: any;
+  public type: string;
+  public title?: string;
+  public content?: string;
+  public text?: string;
+  public image?: any;
 
   /**
    * Creates an instance of Card.
@@ -349,7 +349,7 @@ class Card {
  * This object can only be included when sending a response to a LaunchRequest or IntentRequest.
  */
 class Reprompt {
-  public  outputSpeech?: any;
+  public outputSpeech?: any;
 
   /**
    * Creates an instance of Reprompt.
@@ -368,11 +368,11 @@ class Reprompt {
  * The `Response` object.
  */
 class Response {
-  public  outputSpeech?: OutputSpeech;
-  public  card?: Card;
-  public  reprompt?: Reprompt;
-  public  shouldEndSession?: boolean;
-  public  directives?: any[];
+  public outputSpeech?: OutputSpeech;
+  public card?: Card;
+  public reprompt?: Reprompt;
+  public shouldEndSession?: boolean;
+  public directives?: Array<any>;
 
   /**
    * Creates an instance of Response.
@@ -395,7 +395,7 @@ class Response {
    *
    * If not provided, defaults to `true`.
    *
-   * @param {any[]} [directives]
+   * @param {Array<any>} [directives]
    * An array of directives specifying device-level actions to take using a particular interface, such as the AudioPlayer interface for streaming audio.
    * For details about the directives you can include in your response, see:
    * * [AudioPlayer Interface Reference](https://developer.amazon.com/docs/custom-skills/audioplayer-interface-reference.html)
@@ -410,7 +410,7 @@ class Response {
     card?: Card,
     reprompt?: Reprompt,
     shouldEndSession?: boolean,
-    directives?: any[]
+    directives?: Array<any>
   ) {
     this.outputSpeech = outputSpeech;
     this.card = card;
@@ -424,9 +424,9 @@ class Response {
  * The response from STOCOBS skill.
  */
 class StocObsResponse {
-  private  version: string;
-  private  sessionAttributes?: IStocObsSessionAttributes;
-  private  response: Response;
+  private version: string;
+  private sessionAttributes?: IStocObsSessionAttributes;
+  private response: Response;
 
   /**
    * Creates an instance of StocObsResponse.
@@ -491,7 +491,7 @@ const getStockForCompany = (companyName: string, callback: any) => {
   /////////////////////////// API CALL /////////////////////////////////////////////////////////////////////
   const req = get(url, res => {
     console.log(`>>>> HARMLESS:: Quandl response code = ${res.statusCode}`);
-    const chunks: any[] = [];
+    const chunks: Array<any> = [];
     res.on("data", chunk => {
       chunks.push(chunk);
     });
@@ -524,11 +524,11 @@ const getStockForCompany = (companyName: string, callback: any) => {
  * @class StockData
  */
 class StockData {
-  date: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
+  public date: string;
+  public open: number;
+  public high: number;
+  public low: number;
+  public close: number;
 
   /**
    * Creates an instance of StockData.
@@ -568,7 +568,7 @@ class StockData {
     });
   }
 
-  toString(): string {
+  public toString(): string {
     return JSON.stringify(this);
   }
 }
@@ -597,7 +597,7 @@ interface IQuandlResponseDataset {
    * @type {string[]}
    * @memberof IQuandlResponse
    */
-  column_names: string[];
+  column_names: Array<string>;
 
   /**
    * List of all data. Each row represents the data for a date.
@@ -626,9 +626,8 @@ const getYesterdayDate = (): string => {
  * @returns {string} The ticker code of the company.
  */
 const getCompanyCodeFromName = (companyName: string): string => {
-  for (const key of Object.getOwnPropertyNames(COMPANY_TICKER_MAP)) {
+  for (const key of Object.getOwnPropertyNames(COMPANY_TICKER_MAP))
     if (key.toLowerCase().indexOf(companyName.toLowerCase()) !== -1) return COMPANY_TICKER_MAP[key];
-  }
   return "";
 };
 
