@@ -4,7 +4,7 @@
  * @description Handler for STOCOBS © Alexa skill.
  * @created Mon Jan 22 2018 14:11:26 GMT-0800 (PST)
  * @copyright 2017 Sidharth Mishra
- * @last-modified Tue Jan 23 2018 19:07:07 GMT-0800 (PST)
+ * @last-modified Fri Jan 26 2018 14:32:05 GMT-0800 (PST)
  */
 
 // =========================================================================================
@@ -460,14 +460,30 @@ class StocObsResponse {
  */
 const stocobsHandler = (event: IStocObsEvent, context: any, callback: any) => {
   try {
-    if (event.request.type === "IntentRequest") console.log(`Valid req`);
-    else throw new Error("Not a valid event");
+    /////////////////////////////////////////////////////////////////////////////////
+    if (event.request.type === "IntentRequest") console.log(`Valid Intent Request!`);
+    else
+      return callback(
+        null,
+        new StocObsResponse(
+          `Try saying something like, Alexa, ask stock aubs about Microsoft.
+          Please note, Stock aubs only deals with companies listed on NASDAQ. It uses Alphavantage's Realtime Stock API. The time zone is US Eastern.`
+        )
+      );
+    /////////////////////////////////////////////////////////////////////////////////
     const companyNameSlot: ISlot = (event.request as IStocObsIntentRequest).intent.slots.companyName;
     const slotName: string = companyNameSlot.name;
     const companyName: string = companyNameSlot.value;
-    getStockForCompany(companyName, callback);
+    console.log(`>>>>>>> HARMLESS :: Alexa found company name to be ${companyName}`);
+    getStockForCompany(companyName, callback); // Fetch stocks doing API call.
   } catch (error) {
-    callback(error);
+    return callback(
+      null,
+      new StocObsResponse(
+        `Try saying something like, Alexa, ask stock aubs about Microsoft.
+        Please note, Stock aubs only deals with companies listed on NASDAQ. It uses Alphavantage's Realtime Stock API. The time zone is US Eastern.`
+      )
+    );
   }
 };
 
@@ -483,36 +499,60 @@ const stocobsHandler = (event: IStocObsEvent, context: any, callback: any) => {
 const getStockForCompany = (companyName: string, callback: any) => {
   if (!companyName) throw new Error("Couldn't get the company name.");
   const companyTickerCode: string = getCompanyCodeFromName(companyName);
-  console.log(`>>>> HARMLESS:: company ticker code = ${companyTickerCode}`);
+  console.log(`>>>> HARMLESS:: Company Ticker Code or Symbol = ${companyTickerCode}`);
   if (!companyTickerCode || (companyTickerCode && companyTickerCode.length < 1))
     return callback(null, new StocObsResponse(`The company named ${companyName} is not listed on NASDAQ`));
-  const url: string = `${QUANDL_BASE_API_URL}/${companyTickerCode}.json?api_key=${API_KEY}&start_date=${getYesterdayDate()}`;
+  const url: string = `${ALPHAVANTAGE_API}?function=TIME_SERIES_INTRADAY&symbol=${companyTickerCode}&interval=1min&outputsize=compact&apikey=${API_KEY}`; // uses Alphavantage Realtime stock API
   console.log(`>>>>>> HARMLESS:: API URL :: ${url}`);
   /////////////////////////// API CALL /////////////////////////////////////////////////////////////////////
   const req = get(url, res => {
-    console.log(`>>>> HARMLESS:: Quandl response code = ${res.statusCode}`);
-    const chunks: Array<any> = [];
+    console.log(`>>>> HARMLESS:: AlphaVantage's response code = ${res.statusCode}`);
+    const chunks: Array<string | Buffer> = [];
     res.on("data", chunk => {
       chunks.push(chunk);
     });
     res.on("end", () => {
       try {
-        const body = Buffer.concat(chunks);
-        const quandlResponse: IQuandlResponseDataset = JSON.parse(body.toString()).dataset;
-        console.log(`>>>>>> HARMLESS :: Quandl Response = ${JSON.stringify(quandlResponse)}`);
-        console.log(`>>>>>> HARMLESS :: Quandl Data = ${quandlResponse.data}`);
-        if (!quandlResponse.data || (quandlResponse.data && quandlResponse.data.length < 1))
-          return callback(null, new StocObsResponse(`The company named ${companyName} is not listed on NASDAQ`));
+        const bChunks: Array<Buffer> = chunks.map(chunk => (typeof chunk === "string" ? new Buffer(chunk) : chunk));
+        const body = Buffer.concat(bChunks);
+        ////////////////// PARSE RESPONSE JSON BODY ////////////////////////////////
+        const alphavantageResponse: IAlphavantageResponse = JSON.parse(body.toString());
+        ////////////////// PARSE RESPONSE JSON BODY ////////////////////////////////
+        console.log(`>>>>>> HARMLESS :: Alphavantage Response = ${JSON.stringify(alphavantageResponse)}`);
+        console.log(`>>>>>> HARMLESS :: Alphavantage Data = ${alphavantageResponse["Time Series (1min)"]}`);
+        if (!alphavantageResponse["Time Series (1min)"])
+          return callback(
+            null,
+            new StocObsResponse(
+              `Sorry, stock aubs couldn't get the stocks for ${companyName} at the moment. Please try again after some time.`
+            )
+          );
         else {
-          const stockData: StockData = new StockData(quandlResponse.column_names, quandlResponse.data[0]);
-          const msg = `Stock aubs found that on ${stockData.date} the ${companyName}'s stock opened at ${
-            stockData.open
+          /////////////////////// PROCESS RESPONSE /////////////////////////////////
+          const timestamp: string = Object.getOwnPropertyNames(alphavantageResponse["Time Series (1min)"])[0];
+          const stockData: IStockData = alphavantageResponse["Time Series (1min)"][timestamp];
+          const msg = `Stock aubs found that on ${timestamp} the ${companyName} stock opened at ${
+            stockData["1. open"]
+          } USD.
+          
+          It had a high of ${stockData["2. high"]} USD, a low of ${stockData["3. low"]} USD, and closed at ${
+            stockData["4. close"]
           } USD. 
-        It had a high of ${stockData.high} USD, a low of ${stockData.low} USD, and closed at ${stockData.close} USD.`;
+          
+          The volume was ${stockData["5. volume"]} units.
+          
+          Please note that the time zone is always US Eastern.`;
           return callback(null, new StocObsResponse(msg));
+          /////////////////////// PROCESS RESPONSE /////////////////////////////////
         }
       } catch (error) {
-        return callback(error);
+        return callback(
+          null,
+          new StocObsResponse(
+            `Try saying something like, Alexa, ask stock aubs about Microsoft.
+        Please note, Stock aubs only deals with companies listed on NASDAQ. It uses Alphavantage's Realtime Stock API. The time zone is US Eastern.`
+          )
+        );
       }
     });
   });
@@ -520,91 +560,84 @@ const getStockForCompany = (companyName: string, callback: any) => {
 };
 
 /**
- * The stock data obtained from the API.
- * @class StockData
+ * The interface for the JSON reponse obtained from AlphaVantage API.
+ * @interface IAlphavantageResponse
  */
-class StockData {
-  public date: string;
-  public open: number;
-  public high: number;
-  public low: number;
-  public close: number;
+interface IAlphavantageResponse {
+  /**
+   * Contains the metadata information. The object has the following fields:
+   * * 1. Information
+   * * 2. Symbol
+   * * 3. Last Refreshed
+   * * 4. Interval
+   * * 5. Output Size
+   * * 6. Time Zone -- US/Easter by default
+   * @type {{[metadataName:string]:IMetaData}}
+   * @memberof IAlphavantageResponse
+   */
+  "Meta Data": { [metadataName: string]: IMetaData };
 
   /**
-   * Creates an instance of StockData.
-   *
-   * @param {Array<string>} columnNames
-   * The column names from API.
-   *
-   * @param {Array<string | number>} data
-   * The data in the rows.
-   *
-   * @memberof StockData
+   * The stock data in 1 min intervals.
+   * The object has the timestamp as key and the stock options as fields.
+   * @type {{[timestamp:string]:IStockData}}
+   * @memberof IAlphavantageResponse
    */
-  constructor(columnNames: Array<string>, data: Array<string | number>) {
-    columnNames.forEach((name, i) => {
-      switch (name) {
-        case "Date": {
-          this.date = data[i] as string;
-          break;
-        }
-        case "Open": {
-          this.open = data[i] as number;
-          break;
-        }
-        case "High": {
-          this.high = data[i] as number;
-          break;
-        }
-        case "Low": {
-          this.low = data[i] as number;
-          break;
-        }
-        case "Close": {
-          this.close = data[i] as number;
-          break;
-        }
-      }
-    });
-  }
-
-  public toString(): string {
-    return JSON.stringify(this);
-  }
+  "Time Series (1min)": { [timestamp: string]: IStockData };
 }
 
 /**
- * Quandl API response fragment.
- * @interface IQuandlResponseDataset
+ * Metadata information obtained from the response from Alphavantage API.
+ * @interface IMetaData
  */
-interface IQuandlResponseDataset {
+interface IMetaData {
+  "1. Information": string; // "Intraday (1min) prices and volumes";
+  "2. Symbol": string; // "MSFT";
+  "3. Last Refreshed": string; // "2018-01-26 16:00:00";
+  "4. Interval": string; // "1min";
+  "5. Output Size": string; // "Compact";
+  "6. Time Zone": string; // "US/Eastern";
+}
+
+/**
+ * The stock data obtained from the API.
+ * @interface IStockData
+ */
+interface IStockData {
   /**
-   * Company ticker code.
+   * The stocks's opening price in USD.
    * @type {string}
-   * @memberof IQuandlResponse
+   * @memberof IStockData
    */
-  dataset_code: string;
+  "1. open": string; // "93.9450",
 
   /**
-   * Quandl database code - `WIKI`
+   * The stock's highest price in USD.
    * @type {string}
-   * @memberof IQuandlResponse
+   * @memberof IStockData
    */
-  database_code: string;
+  "2. high": string; // "94.0600",
 
   /**
-   * List of all column names.
-   * @type {string[]}
-   * @memberof IQuandlResponse
+   * The stock's lowest price in USD.
+   * @type {string}
+   * @memberof IStockData
    */
-  column_names: Array<string>;
+  "3. low": string; // "93.9449",
 
   /**
-   * List of all data. Each row represents the data for a date.
-   * @type {Array<Array<number | string>>}
-   * @memberof IQuandlResponse
+   * The stock's closing price in USD.
+   * @type {string}
+   * @memberof IStockData
    */
-  data: Array<Array<number | string>>;
+  "4. close": string; // "94.0600",
+
+  /**
+   * The stock's volume.
+   * @type {string}
+   * @memberof IStockData
+   */
+  "5. volume": string; // "5014634"
 }
 
 /**
@@ -632,17 +665,19 @@ const getCompanyCodeFromName = (companyName: string): string => {
 };
 
 /**
- * QUANDL base API URL.
+ * Alphavantage API for stocks
  */
-const QUANDL_BASE_API_URL: string = "https://www.quandl.com/api/v3/datasets/WIKI";
+const ALPHAVANTAGE_API: string = `https://www.alphavantage.co/query`;
 
 /**
  * Personal API Key.
  */
-const API_KEY: string = "BPszsAzY2t7AR5YBh7kw";
+// const API_KEY: string = "BPszsAzY2t7AR5YBh7kw";
+// API key for Alpha Vantage -- Realtime stock API
+const API_KEY: string = "3OB0J5INWKH5BG1W";
 
 /**
- * The COMPANY name to their TICKER code mapping from QUANDL for NASDAQ.
+ * The COMPANY name to their TICKER code mapping for NASDAQ.
  */
 const COMPANY_TICKER_MAP: { [name: string]: string } = {
   "Advanced Accelerator Applications S.A.": "AAAP",

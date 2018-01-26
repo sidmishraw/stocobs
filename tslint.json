@@ -7,7 +7,8 @@
     "curly": [true, "as-needed"],
     "no-console": false,
     "object-literal-sort-keys": false,
-    "array-type": [true, "generic"]
+    "array-type": [true, "generic"],
+    "ordered-imports": [false]
   },
   "rulesDirectory": []
 }
