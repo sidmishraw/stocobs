@@ -7,4 +7,16 @@ STOCOBS will fetch the opening, high, low, and closing stock prices of the compa
 
 > Note: Pronounce STOCOBS as "stock aubs".
 
+## Sample uterrances
+
+Following are some sample utterances:
+
+* "Alexa, ask stock aubs about Microsoft".
+
+* "Alexa, ask stock aubs for Amazon".
+
+* "Alexa, ask stock aubs for stocks of Netflix".
+
+* "Alexa, ask stock aubs to get the stocks for Zynga".
+
 `- Sid`
