@@ -4,7 +4,7 @@
  * @description Handler for STOCOBS © Alexa skill.
  * @created Mon Jan 22 2018 14:11:26 GMT-0800 (PST)
  * @copyright 2017 Sidharth Mishra
- * @last-modified Fri Jan 26 2018 14:32:05 GMT-0800 (PST)
+ * @last-modified Fri Jan 26 2018 14:54:28 GMT-0800 (PST)
  */
 
 // =========================================================================================
@@ -659,6 +659,18 @@ const getYesterdayDate = (): string => {
  * @returns {string} The ticker code of the company.
  */
 const getCompanyCodeFromName = (companyName: string): string => {
+  //////////// SPECIAL CASES HANDLING //////////////////////
+  switch (companyName.toLowerCase()) {
+    case "google":
+      return "GOOGL";
+    case "apple":
+      return "AAPL";
+    case "microsoft":
+      return "MSFT";
+    case "tesla":
+      return "TSLA";
+  }
+  //////////// SPECIAL CASES HANDLING //////////////////////
   for (const key of Object.getOwnPropertyNames(COMPANY_TICKER_MAP))
     if (key.toLowerCase().indexOf(companyName.toLowerCase()) !== -1) return COMPANY_TICKER_MAP[key];
   return "";
