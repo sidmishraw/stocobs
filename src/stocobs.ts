@@ -4,7 +4,7 @@
  * @description Handler for STOCOBS © Alexa skill.
  * @created Mon Jan 22 2018 14:11:26 GMT-0800 (PST)
  * @copyright 2017 Sidharth Mishra
- * @last-modified Fri Jan 26 2018 14:54:28 GMT-0800 (PST)
+ * @last-modified Fri Jan 26 2018 15:01:19 GMT-0800 (PST)
  */
 
 // =========================================================================================
@@ -519,7 +519,9 @@ const getStockForCompany = (companyName: string, callback: any) => {
         const alphavantageResponse: IAlphavantageResponse = JSON.parse(body.toString());
         ////////////////// PARSE RESPONSE JSON BODY ////////////////////////////////
         console.log(`>>>>>> HARMLESS :: Alphavantage Response = ${JSON.stringify(alphavantageResponse)}`);
-        console.log(`>>>>>> HARMLESS :: Alphavantage Data = ${alphavantageResponse["Time Series (1min)"]}`);
+        console.log(
+          `>>>>>> HARMLESS :: Alphavantage Data = ${JSON.stringify(alphavantageResponse["Time Series (1min)"])}`
+        );
         if (!alphavantageResponse["Time Series (1min)"])
           return callback(
             null,
