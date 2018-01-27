@@ -5,7 +5,7 @@
  * @description Handler for STOCOBS © Alexa skill.
  * @created Mon Jan 22 2018 14:11:26 GMT-0800 (PST)
  * @copyright 2017 Sidharth Mishra
- * @last-modified Sat Jan 27 2018 14:31:09 GMT-0800 (PST)
+ * @last-modified Sat Jan 27 2018 15:26:46 GMT-0800 (PST)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 // =========================================================================================
@@ -264,7 +264,7 @@ function handleStockObserver(request, callback) {
 function getStockForCompany(companyName, callback) {
     ///////////////////////////////////////////////////////////////////
     if (!companyName)
-        return callback(null, new StocObsResponse("Sorry, Alexa couldn't pickup the company name. Please try again!"));
+        return callback(null, new StocObsResponse("Sorry. Maybe Alexa couldn't capture the company name or Stock Observer couldn't get the stocks for the company name. Sorry for the inconvenience!"));
     ///////////////////////////////////////////////////////////////////
     var companyTickerCode = getCompanyCodeFromName(companyName);
     console.info("Company Ticker Code or Symbol = " + companyTickerCode);
