@@ -4,7 +4,7 @@
  * @description Handler for STOCOBS © Alexa skill.
  * @created Mon Jan 22 2018 14:11:26 GMT-0800 (PST)
  * @copyright 2017 Sidharth Mishra
- * @last-modified Fri Jan 26 2018 15:01:19 GMT-0800 (PST)
+ * @last-modified Sat Jan 27 2018 14:31:09 GMT-0800 (PST)
  */
 
 // =========================================================================================
@@ -46,22 +46,10 @@ interface IStocObsEvent {
 
   /**
    * A intent request object that provides the details of the user’s request.
-   * @type {IStocObsIntentRequest | IRequests}
+   * @type {IStocObsIntentRequest}
    * @memberof IStocObsEvent
    */
-  request: IStocObsIntentRequest | IRequests;
-}
-
-/**
- * Generic requests.
- */
-interface IRequests {
-  /**
-   * The type of request.
-   * @type {string}
-   * @memberof IRequests
-   */
-  type: string;
+  request: IStocObsIntentRequest;
 }
 
 /**
@@ -460,32 +448,90 @@ class StocObsResponse {
  */
 const stocobsHandler = (event: IStocObsEvent, context: any, callback: any) => {
   try {
-    /////////////////////////////////////////////////////////////////////////////////
-    if (event.request.type === "IntentRequest") console.log(`Valid Intent Request!`);
-    else
-      return callback(
-        null,
-        new StocObsResponse(
-          `Try saying something like, Alexa, ask stock aubs about Microsoft.
-          Please note, Stock aubs only deals with companies listed on NASDAQ. It uses Alphavantage's Realtime Stock API. The time zone is US Eastern.`
-        )
-      );
-    /////////////////////////////////////////////////////////////////////////////////
-    const companyNameSlot: ISlot = (event.request as IStocObsIntentRequest).intent.slots.companyName;
-    const slotName: string = companyNameSlot.name;
-    const companyName: string = companyNameSlot.value;
-    console.log(`>>>>>>> HARMLESS :: Alexa found company name to be ${companyName}`);
-    getStockForCompany(companyName, callback); // Fetch stocks doing API call.
+    switch (event.request.type) {
+      case "LaunchRequest":
+        return handleLaunchRequest(callback);
+      case "IntentRequest": {
+        switch (event.request.intent.name) {
+          case "AMAZON.HelpIntent":
+            return handleHelpRequest(callback);
+          default:
+            return handleStockObserver(event.request, callback);
+        }
+      }
+      default:
+        return handleHelpRequest(callback);
+    }
   } catch (error) {
     return callback(
       null,
       new StocObsResponse(
-        `Try saying something like, Alexa, ask stock aubs about Microsoft.
-        Please note, Stock aubs only deals with companies listed on NASDAQ. It uses Alphavantage's Realtime Stock API. The time zone is US Eastern.`
+        `Sorry, Stock Observer couldn't work out the details.
+        Please try saying something like, Alexa, ask Stock Observer about Microsoft.
+        Please note, Stock Observer only deals with companies listed on NASDAQ. It uses Alphavantage's Realtime Stock API. The time zone is US Eastern.`
       )
     );
   }
 };
+
+/**
+ * Handle's StocObs's launch request or intent.
+ *
+ * @param {*} callback
+ * The callback function to be called.
+ */
+function handleLaunchRequest(callback: any) {
+  console.info(`StocObs's LaunchRequest intent invoked.`);
+  return callback(
+    null,
+    new StocObsResponse(
+      `Stock Observer doesn't have any open commands. To invoke the skill just say something like: Alexa, ask Stock Observer about Microsoft. That's all you need!`
+    )
+  );
+}
+
+/**
+ * Handle's StocObs's help request or intent.
+ *
+ * @param {*} callback
+ * The callback function to be called.
+ */
+function handleHelpRequest(callback: any) {
+  console.info(`StocObs's AMAZON.HelpIntent intent invoked.`);
+  return callback(
+    null,
+    new StocObsResponse(
+      `To invoke Stock Observer, try saying something like, Alexa, ask Stock Observer about Microsoft. Please note, Stock Observer only deals with companies listed on NASDAQ. It uses Alphavantage's Realtime Stock API. The time zone is always US Eastern.`
+    )
+  );
+}
+
+/**
+ * Handles StocObs's StockObserver intent request.
+ *
+ * @param {IStocObsIntentRequest} request
+ * The intent request.
+ *
+ * @param {*} callback
+ * The callback function to be executed..
+ */
+function handleStockObserver(request: IStocObsIntentRequest, callback: any) {
+  try {
+    console.info(`StocObs's Stock Observer handler has been invoked.`);
+    const companyNameSlot: ISlot = request.intent.slots.companyName;
+    const slotName: string = companyNameSlot.name;
+    const companyName: string = companyNameSlot.value;
+    console.info(`Alexa found company name to be ${companyName}`);
+    getStockForCompany(companyName, callback); // Fetch stocks doing API call.
+  } catch (error) {
+    callback(
+      null,
+      new StocObsResponse(
+        `Stock Observer had some trouble completing your request. Please try after some time. It's embarrassing but, sorry about this!`
+      )
+    );
+  }
+}
 
 /**
  * Fetches the stock of the company and constructs the message for the user.
@@ -496,21 +542,34 @@ const stocobsHandler = (event: IStocObsEvent, context: any, callback: any) => {
  * @param {any} callback
  * The callback function to execute after fetching the stocks.
  */
-const getStockForCompany = (companyName: string, callback: any) => {
-  if (!companyName) throw new Error("Couldn't get the company name.");
+function getStockForCompany(companyName: string, callback: any) {
+  ///////////////////////////////////////////////////////////////////
+  if (!companyName)
+    return callback(null, new StocObsResponse(`Sorry, Alexa couldn't pickup the company name. Please try again!`));
+  ///////////////////////////////////////////////////////////////////
   const companyTickerCode: string = getCompanyCodeFromName(companyName);
-  console.log(`>>>> HARMLESS:: Company Ticker Code or Symbol = ${companyTickerCode}`);
+  console.info(`Company Ticker Code or Symbol = ${companyTickerCode}`);
+  ////////////////////////////////////////////////////////////////////////
   if (!companyTickerCode || (companyTickerCode && companyTickerCode.length < 1))
-    return callback(null, new StocObsResponse(`The company named ${companyName} is not listed on NASDAQ`));
+    return callback(
+      null,
+      new StocObsResponse(
+        `Sorry, maybe this company named ${companyName} is not listed on NASDAQ or might be listed under another name. Sorry for the inconvenience.`
+      )
+    );
+  ////////////////////////////////////////////////////////////////////////
   const url: string = `${ALPHAVANTAGE_API}?function=TIME_SERIES_INTRADAY&symbol=${companyTickerCode}&interval=1min&outputsize=compact&apikey=${API_KEY}`; // uses Alphavantage Realtime stock API
-  console.log(`>>>>>> HARMLESS:: API URL :: ${url}`);
+  console.info(`API URL formed = ${url}`);
   /////////////////////////// API CALL /////////////////////////////////////////////////////////////////////
-  const req = get(url, res => {
-    console.log(`>>>> HARMLESS:: AlphaVantage's response code = ${res.statusCode}`);
+  get(url, res => {
+    console.info(`AlphaVantage's response code = ${res.statusCode}`);
     const chunks: Array<string | Buffer> = [];
+    //////////////////////////////
     res.on("data", chunk => {
       chunks.push(chunk);
     });
+    //////////////////////////////
+    /////////////////////////////////////////////////
     res.on("end", () => {
       try {
         const bChunks: Array<Buffer> = chunks.map(chunk => (typeof chunk === "string" ? new Buffer(chunk) : chunk));
@@ -518,22 +577,20 @@ const getStockForCompany = (companyName: string, callback: any) => {
         ////////////////// PARSE RESPONSE JSON BODY ////////////////////////////////
         const alphavantageResponse: IAlphavantageResponse = JSON.parse(body.toString());
         ////////////////// PARSE RESPONSE JSON BODY ////////////////////////////////
-        console.log(`>>>>>> HARMLESS :: Alphavantage Response = ${JSON.stringify(alphavantageResponse)}`);
-        console.log(
-          `>>>>>> HARMLESS :: Alphavantage Data = ${JSON.stringify(alphavantageResponse["Time Series (1min)"])}`
-        );
+        console.info(`Alphavantage Response = ${JSON.stringify(alphavantageResponse)}`);
+        console.info(`Alphavantage Data = ${JSON.stringify(alphavantageResponse["Time Series (1min)"])}`);
         if (!alphavantageResponse["Time Series (1min)"])
           return callback(
             null,
             new StocObsResponse(
-              `Sorry, stock aubs couldn't get the stocks for ${companyName} at the moment. Please try again after some time.`
+              `Sorry, Stock Observer couldn't get the stocks for ${companyName} at the moment. Please try again after some time.`
             )
           );
         else {
           /////////////////////// PROCESS RESPONSE /////////////////////////////////
           const timestamp: string = Object.getOwnPropertyNames(alphavantageResponse["Time Series (1min)"])[0];
           const stockData: IStockData = alphavantageResponse["Time Series (1min)"][timestamp];
-          const msg = `Stock aubs found that on ${timestamp} the ${companyName} stock opened at ${
+          const msg = `Stock Observer found that on ${timestamp} the ${companyName} stock opened at ${
             stockData["1. open"]
           } USD.
           
@@ -551,16 +608,19 @@ const getStockForCompany = (companyName: string, callback: any) => {
         return callback(
           null,
           new StocObsResponse(
-            `Try saying something like, Alexa, ask stock aubs about Microsoft.
-        Please note, Stock aubs only deals with companies listed on NASDAQ. It uses Alphavantage's Realtime Stock API. The time zone is US Eastern.`
+            `Well this is embarrassing. Stock Observer couldn't complete your request. Please try again after some time.`
           )
         );
       }
     });
+    /////////////////////////////////////////////////
   });
   /////////////////////////// API CALL /////////////////////////////////////////////////////////////////////
-};
+}
 
+// =========================================================================================
+//                                ALPHAVANTAGE API RELATED
+// =========================================================================================
 /**
  * The interface for the JSON reponse obtained from AlphaVantage API.
  * @interface IAlphavantageResponse
@@ -642,15 +702,19 @@ interface IStockData {
   "5. volume": string; // "5014634"
 }
 
+// =========================================================================================
+//                                UTILITIES
+// =========================================================================================
+
 /**
  * Fetches yesterday's date in `yyyy-mm-dd` format.
  * @returns {string} The date in `yyyy-mm-dd` format.
  */
-const getYesterdayDate = (): string => {
+function getYesterdayDate(): string {
   const date: Date = new Date();
   date.setDate(date.getDate() - 1); // get yesterday's date
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-};
+}
 
 /**
  * Fetches the ticker code of the company from its name.
@@ -660,7 +724,7 @@ const getYesterdayDate = (): string => {
  *
  * @returns {string} The ticker code of the company.
  */
-const getCompanyCodeFromName = (companyName: string): string => {
+function getCompanyCodeFromName(companyName: string): string {
   //////////// SPECIAL CASES HANDLING //////////////////////
   switch (companyName.toLowerCase()) {
     case "google":
@@ -676,7 +740,11 @@ const getCompanyCodeFromName = (companyName: string): string => {
   for (const key of Object.getOwnPropertyNames(COMPANY_TICKER_MAP))
     if (key.toLowerCase().indexOf(companyName.toLowerCase()) !== -1) return COMPANY_TICKER_MAP[key];
   return "";
-};
+}
+
+// =========================================================================================
+//                                    API KEYS
+// =========================================================================================
 
 /**
  * Alphavantage API for stocks
@@ -689,6 +757,10 @@ const ALPHAVANTAGE_API: string = `https://www.alphavantage.co/query`;
 // const API_KEY: string = "BPszsAzY2t7AR5YBh7kw";
 // API key for Alpha Vantage -- Realtime stock API
 const API_KEY: string = "3OB0J5INWKH5BG1W";
+
+// =========================================================================================
+//                         TICKER LOOKUP
+// =========================================================================================
 
 /**
  * The COMPANY name to their TICKER code mapping for NASDAQ.
@@ -3888,4 +3960,5 @@ const COMPANY_TICKER_MAP: { [name: string]: string } = {
 // =========================================================================================
 //                                      EXPORTS
 // =========================================================================================
+
 export const handler = stocobsHandler;
